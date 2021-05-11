@@ -1,0 +1,39 @@
+#include <Servo.h>
+#include "Arduino.h"
+#include "SoftwareSerial.h"
+
+// Servo Config
+Servo exitservo;
+
+
+//LED Config
+int ledexitOK = 5; //led verde
+int ledexitF = 4; //led rojo
+
+void setup() { 
+  Serial.begin(9600);                   // Activa el puerto Serial a 9600 Baudios
+ 
+
+  exitservo.attach(13);
+  exitservo.write(0);
+
+  //LEDS
+   pinMode(ledexitOK, OUTPUT);//le decimos que el led pin 26 será de salida
+   pinMode(ledexitF, OUTPUT);//le decimos que el led pin 26 será de salida
+}
+
+
+
+void loop()
+{ 
+ 
+      digitalWrite(ledexitF, HIGH);//led rojo se apaga
+      digitalWrite(ledexitOK, HIGH);//led verde se enciende
+
+
+  exitservo.write(5);
+  delay(3000);
+  exitservo.write(80);
+   delay(3000);
+  
+}
