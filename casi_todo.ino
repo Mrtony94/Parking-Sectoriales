@@ -1,456 +1,181 @@
-
-#include <Wire.h> 
-#include <LiquidCrystal_I2C.h>
 #include <Servo.h>
 
-//I2C pins declaration for LCD
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); 
-
-// Servo Config
-Servo enteryservo;
-Servo exitservo;
-int enterypos = 180;
-int exitpos = 90;
+//SENSOR FUEGO
+int BUZZER = 41;      // selecciona el pin para el zumbador
+int FLAME = 35;  // selecciona el pin del sensor
 
 // IR Config
-int enteryIrPin = 12; int enteryIr = HIGH;
-int exitIrPin = 11; int exitIr = HIGH;
-int slotAIrPin = 7; int slotAIr = HIGH;
-int slotBIrPin = 8; int slotBIr = HIGH;
-int slotCIrPin = 9; int slotCIr =HIGH;
-int slotDIrPin = 10;  int slotDIr = HIGH;
+
+
+int slotAIrPin = 3; int slotAIr = HIGH;
+int slotBIrPin = 4; int slotBIr = HIGH;
+int slotCIrPin = 5; int slotCIr =HIGH;
+int slotDIrPin = 6;  int slotDIr = HIGH;
+
+int slotOUTIrPin = 53; int slotOUTIr = HIGH;
+int slotINIrPin = 52; int slotINIr = HIGH;
 
 // entery Gate Led Config
-int gateGLED = 6;
-int gateRLED = 13;
+int gateGLEDA = 7;
+int gateRLEDA = 8;
 
-// LDR Config & Lighting
-int LDRPin = A2;
-int LightLEDPin = 5;
-int LDRValue = 0;
+int gateGLEDB = 9;
+int gateRLEDB = 10;
 
-// Slot Status LED
+int gateGLEDC = 11;
+int gateRLEDC = 12;
 
+int gateGLEDD = 13;
+int gateRLEDD = 14;
 
+// Servo Config
+Servo outservo;
+Servo inservo;
 
+//LED Config
+int ledoutOK = 20; //led verde
+int ledoutF = 21; //led rojo
+
+int ledinOK = 22; //led verde
+int ledinF = 23; //led rojo
 
 void setup() 
 {
-  Serial.begin(9600);
-// LCD Setup
-lcd.begin(16,2);//Defining 16 columns and 2 rows of lcd display
-lcd.backlight();//To Power ON the back light
+  //SERVO
+  Serial.begin(9600);                   // Activa el puerto Serial a 9600 Baudios
 
-//Servo Setup
-enteryservo.attach(A0); 
-exitservo.attach(A1);
-enteryservo.write(5);
-// IR Pin Setup
-pinMode(enteryIrPin, INPUT);
-pinMode(exitIrPin, INPUT);
-pinMode(slotAIrPin, INPUT);
-pinMode(slotBIrPin, INPUT);
-pinMode(slotCIrPin, INPUT);
-pinMode(slotDIrPin, INPUT);
+ // declarar buzzer como una SALIDA:
+  pinMode(BUZZER, OUTPUT);
+  pinMode(FLAME, INPUT);
+  pinMode(alcohol, OUTPUT);
 
-//Gate LED setup
-pinMode(gateGLED, OUTPUT);
-pinMode(gateRLED, OUTPUT);
+  outservo.attach(44);
+  outservo.write(0);
+  inservo.attach(43);
+  inservo.write(0);
 
-// Lighting Setup
-pinMode(LightLEDPin, OUTPUT);
+  //LEDS
+   pinMode(ledinOK, OUTPUT);//le decimos que el led pin 26 será de salida
+   pinMode(ledinF, OUTPUT);//le decimos que el led pin 26 será de salida
+   pinMode(ledoutOK, OUTPUT);//le decimos que el led pin 26 será de salida
+   pinMode(ledoutF, OUTPUT);//le decimos que el led pin 26 será de salida
 
+  pinMode(slotINIrPin, INPUT);
+  pinMode(slotOUTIrPin, INPUT); 
+  
+  pinMode(slotAIrPin, INPUT);
+  pinMode(slotBIrPin, INPUT);
+  pinMode(slotCIrPin, INPUT);
+  pinMode(slotDIrPin, INPUT);
+
+  //Gate LED setup
+pinMode(gateGLEDA, OUTPUT);
+pinMode(gateRLEDA, OUTPUT);
+
+pinMode(gateGLEDB, OUTPUT);
+pinMode(gateRLEDB, OUTPUT);
+
+pinMode(gateGLEDC, OUTPUT);
+pinMode(gateRLEDC, OUTPUT);
+
+pinMode(gateGLEDD, OUTPUT);
+pinMode(gateRLEDD, OUTPUT);
 
 }
 
 void loop() 
 {  
-// Check Slot 
+//check in
+int slotINval = digitalRead(slotINIrPin);
+if (slotINval == 0)
+    {
+    digitalWrite(ledinF, HIGH);
+    digitalWrite(ledinOK, LOW);
+    Serial.println("Slot IN Busy");
+    inservo.write(80);
+    delay(3000);
+    }
+else{
+    Serial.println("Slot IN clear");
+    digitalWrite(ledinOK, HIGH);
+    digitalWrite(ledinF, LOW);
+    inservo.write(5);
+    delay(100);
+    }
+ int slotOUTval = digitalRead(slotOUTIrPin);
+if (slotOUTval == 0)
+    {
+    digitalWrite(ledoutF, HIGH);
+    digitalWrite(ledoutOK, LOW);
+    Serial.println("Slot OUT Busy");
+    outservo.write(5);
+    delay(3000);
+    }
+else{
+    Serial.println("Slot OUT clear");
+    digitalWrite(ledoutOK, HIGH);
+    digitalWrite(ledoutF, LOW);
+    outservo.write(80);
+    delay(100);
+    } 
+  // Check Slot 
 int slotAval = digitalRead(slotAIrPin);
-int slotBval = digitalRead(slotBIrPin);
-int slotCval = digitalRead(slotCIrPin);
-int slotDval = digitalRead(slotDIrPin);
-
-   // Check Slot A
 if (slotAval == 0)
     {
-    digitalWrite(gateRLED, HIGH);
+    digitalWrite(gateRLEDA, HIGH);
+    digitalWrite(gateGLEDA, LOW);
     Serial.println("Slot A BUSY");
-    lcd.setCursor(0,0);
-    lcd.print("SlotA=");
-    lcd.setCursor(6,0);
-    lcd.print("1");
-    lcd.setCursor(7,0);
-    lcd.print(",");
     delay(100);
     }
 else{
     Serial.println("Slot A clear");
-    digitalWrite(gateRLED, LOW);
-    lcd.setCursor(0,0);
-    lcd.print("SlotA=");
-    lcd.setCursor(6,0);
-    lcd.print("0");
-    lcd.setCursor(7,0);
-    lcd.print(",");
+    digitalWrite(gateGLEDA, HIGH);
+    digitalWrite(gateRLEDA, LOW);
     delay(100);
     }
-    // Check Slot B
+int slotBval = digitalRead(slotBIrPin);
 if (slotBval == 0)
     {
-    //digitalWrite(gateRLED, HIGH);
+    digitalWrite(gateRLEDB, HIGH);
+    digitalWrite(gateGLEDB, LOW);
     Serial.println("Slot B BUSY");
-    lcd.setCursor(9,0);
-    lcd.print("SlotB=");
-    lcd.setCursor(15,0);
-    lcd.print("1");
     delay(100);
     }
 else{
     Serial.println("Slot B clear");
-    //digitalWrite(gateRLED, LOW);
-    lcd.setCursor(9,0);
-    lcd.print("SlotB=");
-    lcd.setCursor(15,0);
-    lcd.print("0");
+    digitalWrite(gateGLEDB, HIGH);
+    digitalWrite(gateRLEDB, LOW);
     delay(100);
-   }
-   // Check Slot C
+    }
+int slotCval = digitalRead(slotCIrPin);
 if (slotCval == 0)
     {
-    //digitalWrite(gateRLED, HIGH);
+    digitalWrite(gateRLEDC, HIGH);
+    digitalWrite(gateGLEDC, LOW);
     Serial.println("Slot C BUSY");
-    lcd.setCursor(0,1);
-    lcd.print("SlotC=");
-    lcd.setCursor(6,1);
-    lcd.print("1");
-    lcd.setCursor(7,1);
-    lcd.print(",");
     delay(100);
     }
 else{
     Serial.println("Slot C clear");
-    //digitalWrite(gateRLED, LOW);
-    lcd.setCursor(0,1);
-    lcd.print("SlotC=");
-    lcd.setCursor(6,1);
-    lcd.print("0");
-    lcd.setCursor(7,1);
-    lcd.print(",");
+    digitalWrite(gateGLEDC, HIGH);
+    digitalWrite(gateRLEDC, LOW);
     delay(100);
     }
-    // Check Slot D
+int slotDval = digitalRead(slotDIrPin);
 if (slotDval == 0)
     {
-    //digitalWrite(gateRLED, HIGH);
+    digitalWrite(gateRLEDD, HIGH);
+    digitalWrite(gateGLEDD, LOW);
     Serial.println("Slot D BUSY");
-    lcd.setCursor(9,1);
-    lcd.print("SlotD=");
-    lcd.setCursor(15,1);
-    lcd.print("1");
     delay(100);
     }
 else{
     Serial.println("Slot D clear");
-    //digitalWrite(gateRLED, LOW);
-    lcd.setCursor(9,1);
-    lcd.print("SlotD=");
-    lcd.setCursor(15,1);
-    lcd.print("0");
+    digitalWrite(gateGLEDD, HIGH);
+    digitalWrite(gateRLEDD, LOW);
     delay(100);
     }
-//==============================================================================================================================
-    //Case Park Full
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Full No Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(2,1);
-   lcd.print("Parking Full");
-   digitalWrite(gateGLED, LOW);
-   digitalWrite(gateRLED, HIGH);
-   delay(5000);
-   lcd.clear();  
-     }
-//===============================================================================================================================
-   //Case Park Avalibale 1
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//================================================================================================================================     
-          //Case Park Avalibale 2
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//====================================================================================================================================
-     //Case Park Avalibale 3
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=====================================================================================================================================     
-     //Case Park Avalibale 4
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//========================================================================================================================================
-     //Case Park Avalibale 5
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//==================================================================================================================================
-     //Case Park Avalibale 6
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=======================================================================================================================================
-     //Case Park Avalibale 7
-if(   !(digitalRead(enteryIrPin)) && !(digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//========================================================================================================================================
-     //Case Park Avalibale 8
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//==========================================================================================================================================
-     //Case Park Avalibale 9
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=====================================================================================================================================
-     //Case Park Avalibale 10
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=====================================================================================================================================
-     //Case Park Avalibale 11
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && !(digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=================================================================================================================================
-     //Case Park Avalibale 12
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//=================================================================================================================================
-     //Case Park Avalibale 13
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && !(digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//==================================================================================================================================
-     //Case Park Avalibale 14
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && !(digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }
-//===================================================================================================================================
-     //Case Park Avalibale 15
-if(   !(digitalRead(enteryIrPin)) && (digitalRead(slotAIrPin)) && (digitalRead(slotBIrPin)) && (digitalRead(slotCIrPin)) && (digitalRead(slotDIrPin)))   
-     {
-     Serial.println("Welcome, Parking Available Slots");  //print slot1 and slo2 available
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("wlecome");
-   lcd.setCursor(0,1);
-   lcd.print("Parking Avilable");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   enteryservo.write(90); 
-   delay(5000);
-   enteryservo.write(5);
-   lcd.clear();
-   }  
-      
-//=============================================================================================================================      
-  // case car leaving
-  if( !(digitalRead(exitIrPin)))    // no input detected
-        { Serial.println("Good Bye");  
-   lcd.clear();
-   lcd.setCursor(4,0);
-   lcd.print("Good Bye");
-   lcd.setCursor(3,1);
-   lcd.print("Drive Safe");
-   digitalWrite(gateGLED, HIGH);
-   digitalWrite(gateRLED, LOW);
-   exitservo.write(5); 
-   delay(5000);
-   exitservo.write(90);
-   lcd.clear();
-        }
-//==============================================================================================================================
-// Lighting 
- LDRValue = analogRead(LDRPin);
-  if (LDRValue>= 200){
-    digitalWrite(LightLEDPin, HIGH);
-  }else{digitalWrite(LightLEDPin, LOW);}
-//==============================================================================================================================        
-  }    
+
+ digitalWrite(BUZZER,digitalRead(FLAME));
+ 
+}
