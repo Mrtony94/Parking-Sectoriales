@@ -1,7 +1,5 @@
 #include <Adafruit_NeoPixel.h>
 
-
-
 #define TRIG 4
 #define ECHO 5
 int num_leds=28;
